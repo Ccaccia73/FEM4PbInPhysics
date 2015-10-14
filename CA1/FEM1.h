@@ -464,6 +464,8 @@ double FEM<dim>::l2norm_of_error(){
     //Find the element length
     h_e = nodeLocation[local_dof_indices[1]] - nodeLocation[local_dof_indices[0]];
 
+    // std::cout << "Element length: " << h_e << std::endl;
+
     for(unsigned int q=0; q<quadRule; q++){
     	x = 0.; u_h = 0.;
     	//Find the values of x and u_h (the finite element solution) at the quadrature points
@@ -475,11 +477,20 @@ double FEM<dim>::l2norm_of_error(){
     	/*This includes evaluating the exact solution at the quadrature points*/
     	
     	if(prob == 1){
-    		u_exact = x*(g2/L+f_bar/(6*E_young*Area)*(L*L-x*x));
+    		u_exact = x*(g2/L+f_bar/(6*E_young)*(L*L-x*x));
+    		// std::cout << "d: " << g2 << " L: " << L << " f_bar: " << f_bar << " E: " << E_young << " A: " << Area << std::endl; 
     	}else{
     		u_exact = 0.0;
     	}
-    	l2norm += h_e * pow(u_exact - u_h, 2);
+
+    	// std::cout << "\tQuadrature point: " << q << std::endl;
+    	// std::cout << "\t\tact x: " << x << std::endl;
+    	// std::cout << "\t\t\tu_h: " << u_h << std::endl;
+    	// std::cout << "\t\t\tu_exact: " << u_exact << std::endl;
+
+
+
+    	l2norm += (u_exact - u_h)*(u_exact - u_h)*h_e;
     }
   }
 
