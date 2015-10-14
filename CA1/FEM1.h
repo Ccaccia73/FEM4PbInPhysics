@@ -85,6 +85,12 @@ class FEM
   std::map<unsigned int,double> boundary_values;	//Map of dirichlet boundary conditions
   double                basisFunctionOrder, prob, L, g1, g2;    
 
+  // add problem parameters
+  double f_bar   = 1e11; // [N/m^4] f = f_bar*x
+  double Area    = 1e-4; // [m^2] section area
+  double tA      = 1e6;  // [N] traction at end (pb = 2 - Neumann)
+  double E_young = 1e11; // [Pa] Young modulus
+  
   //solution name array
   std::vector<std::string> nodal_solution_names;
   std::vector<DataComponentInterpretation::DataComponentInterpretation> nodal_data_component_interpretation;
@@ -322,10 +328,10 @@ void FEM<dim>::assemble_system(){
 
   K=0; F=0;
 
-  double f_bar = 1e11; // [N/m^4] f = f_bar*x
-  double Area  = 1e-4; // [m^2] section area
-  double tA    = 1e6;  // [N] traction at end (pb = 2 - Neumann)
-  double E     = 1e11; // [Pa] Young modulus
+  // f_bar   = 1e11; // [N/m^4] f = f_bar*x
+  // Area    = 1e-4; // [m^2] section area
+  // tA      = 1e6;  // [N] traction at end (pb = 2 - Neumann)
+  // E_young = 1e11; // [Pa] Young modulus
 
   const unsigned int   			dofs_per_elem = fe.dofs_per_cell; //This gives you number of degrees of freedom per element
   FullMatrix<double> 				Klocal (dofs_per_elem, dofs_per_elem);
@@ -361,8 +367,8 @@ void FEM<dim>::assemble_system(){
         //EDITED - Define Flocal.
         // Area = 1e-4 m^2
         // f_bar = 1e11 N/m^4
-        // f _ f_bar * x
-        Flocal[A] += Area*h_e/2. * f_bar * x * basis_function(A, quad_points[q]) * quad_weight[q];
+        f = f_bar * x;
+        Flocal[A] += Area*h_e/2. * f * basis_function(A, quad_points[q]) * quad_weight[q];
       }
     }
     //Add nonzero Neumann condition, if applicable
@@ -379,7 +385,7 @@ void FEM<dim>::assemble_system(){
       for(unsigned int B=0; B<dofs_per_elem; B++){
         for(unsigned int q=0; q<quadRule; q++){
           //EDITED - Define Klocal.
-          Klocal[A][B] += 2*E*A/h_e * basis_gradient(A,quad_points[q]) * basis_gradient(B, quad_points[q]) * quad_weight[q];
+          Klocal[A][B] += 2*E_young*Area/h_e * basis_gradient(A,quad_points[q]) * basis_gradient(B, quad_points[q]) * quad_weight[q];
         }
       }
     }
@@ -459,15 +465,21 @@ double FEM<dim>::l2norm_of_error(){
     h_e = nodeLocation[local_dof_indices[1]] - nodeLocation[local_dof_indices[0]];
 
     for(unsigned int q=0; q<quadRule; q++){
-      x = 0.; u_h = 0.;
-      //Find the values of x and u_h (the finite element solution) at the quadrature points
-      for(unsigned int B=0; B<dofs_per_elem; B++){
-        x += nodeLocation[local_dof_indices[B]]*basis_function(B,quad_points[q]);
-        u_h += D[local_dof_indices[B]]*basis_function(B,quad_points[q]);
-      }
-      //EDIT - Find the l2-norm of the error through numerical integration.
-      /*This includes evaluating the exact solution at the quadrature points*/
-							
+    	x = 0.; u_h = 0.;
+    	//Find the values of x and u_h (the finite element solution) at the quadrature points
+    	for(unsigned int B=0; B<dofs_per_elem; B++){
+    		x += nodeLocation[local_dof_indices[B]]*basis_function(B,quad_points[q]);
+    		u_h += D[local_dof_indices[B]]*basis_function(B,quad_points[q]);
+    	}
+    	//EDIT - Find the l2-norm of the error through numerical integration.
+    	/*This includes evaluating the exact solution at the quadrature points*/
+    	
+    	if(prob == 1){
+    		u_exact = x*(g2/L+f_bar/(6*E_young*Area)*(L*L-x*x));
+    	}else{
+    		u_exact = 0.0;
+    	}
+    	l2norm += h_e * pow(u_exact - u_h, 2);
     }
   }
 
