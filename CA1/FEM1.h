@@ -480,7 +480,7 @@ double FEM<dim>::l2norm_of_error(){
     		u_exact = x*(g2/L+f_bar/(6*E_young)*(L*L-x*x));
     		// std::cout << "d: " << g2 << " L: " << L << " f_bar: " << f_bar << " E: " << E_young << " A: " << Area << std::endl; 
     	}else{
-    		u_exact = 0.0;
+    		u_exact = x/E_young*(tA/Area+f_bar/2*(L*L-x*x/3));
     	}
 
     	// std::cout << "\tQuadrature point: " << q << std::endl;
