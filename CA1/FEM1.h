@@ -490,7 +490,7 @@ double FEM<dim>::l2norm_of_error(){
 
 
 
-    	l2norm += (u_exact - u_h)*(u_exact - u_h)*h_e;
+    	l2norm += (u_exact - u_h)*(u_exact - u_h)*h_e/2;
     }
   }
 
