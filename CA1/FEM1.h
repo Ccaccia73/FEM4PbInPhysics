@@ -375,7 +375,7 @@ void FEM<dim>::assemble_system(){
     if(prob == 2){ 
       if(nodeLocation[local_dof_indices[1]] == L){
         //EDITED - Modify Flocal to include the traction on the right boundary.
-        Flocal[local_dof_indices[1]] += tA; // traction
+        Flocal[1] += tA; // traction
       }
     }
 
