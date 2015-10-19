@@ -139,10 +139,10 @@ template <int dim>
 void FEM<dim>::generate_mesh(std::vector<unsigned int> numberOfElements){
 
   //Define the limits of your domain
-  double x_min = , //EDIT - define the left limit of the domain, etc.
-    x_max = , //EDIT
-    y_min = , //EDIT
-    y_max = ; //EDIT
+  double x_min = 0.0, //EDITED - define the left limit of the domain, etc.
+    x_max = 0.03, //EDITED
+    y_min = 0.0, //EDITED
+    y_max = 0.08; //EDITED
 
   Point<dim,double> min(x_min,y_min),
     max(x_max,y_max);
@@ -201,6 +201,7 @@ void FEM<dim>::setup_system(){
   D.reinit (dof_handler.n_dofs());
 
   //Define quadrature rule - again, you decide what quad rule is needed
+  /*
   quadRule = 2; //EDIT - Number of quadrature points along one dimension
   quad_points.resize(quadRule); quad_weight.resize(quadRule);
 
@@ -209,6 +210,18 @@ void FEM<dim>::setup_system(){
 
   quad_weight[0] = 1.; //EDIT
   quad_weight[1] = 1.; //EDIT
+  */
+  
+  quadRule = 3; //EDITED - Number of quadrature points along one dimension
+  quad_points.resize(quadRule); quad_weight.resize(quadRule);
+
+  quad_points[0] = -sqrt(3./5.);
+  quad_points[1] = 0.;
+  quad_points[2] = sqrt(3./5.);
+
+  quad_weight[0] = 5./9.;
+  quad_weight[1] = 8./9.;
+  quad_weight[2] = 5./9.;
 
   //Just some notes...
   std::cout << "   Number of active elems:       " << triangulation.n_active_cells() << std::endl;
