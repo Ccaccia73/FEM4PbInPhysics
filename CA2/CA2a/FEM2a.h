@@ -212,9 +212,9 @@ void FEM<dim>::define_boundary_conds(){
 
   for(unsigned int node_i=0; node_i< totalNodes; ++node_i){
     if(nodeLocation[node_i][1] == y_min){
-      boundary_values[nodde_i] = T0*(1+c0*nodeLocation[node_i][0]);
+      boundary_values[node_i] = T0*(1+c0*nodeLocation[node_i][0]);
     }else if (nodeLocation[node_i][1] == y_max){
-      boundary_values[nodde_i] = T1*(1+c0_hat*nodeLocation[node_i][0]);
+      boundary_values[node_i] = T1*(1+c0_hat*nodeLocation[node_i][0]);
     }
   }
 
@@ -308,19 +308,18 @@ void FEM<dim>::assemble_system(){
     Flocal = 0.;
     for(unsigned int q1=0; q1<quadRule; q1++){
       for(unsigned int q2=0; q2<quadRule; q2++){
-	Jacobian = 0.;
-	for(unsigned int i=0;i<dim;i++){
-	  for(unsigned int j=0;j<dim;j++){
-	    for(unsigned int A=0; A<dofs_per_elem; A++){
-	      Jacobian[i][j] += nodeLocation[local_dof_indices[A]][i]
-		*basis_gradient(A,quad_points[q1],quad_points[q2])[j];
-	    }
-	  }
-	}
-	detJ = Jacobian.determinant();
-	for(unsigned int A=0; A<dofs_per_elem; A++){
-	  //You would define Flocal here if it were nonzero.
-	}
+        Jacobian = 0.;
+        for(unsigned int i=0;i<dim;i++){
+          for(unsigned int j=0;j<dim;j++){
+            for(unsigned int A=0; A<dofs_per_elem; A++){
+              Jacobian[i][j] += nodeLocation[local_dof_indices[A]][i]*basis_gradient(A,quad_points[q1],quad_points[q2])[j];
+            }
+          }
+        }
+        detJ = Jacobian.determinant();
+        for(unsigned int A=0; A<dofs_per_elem; A++){
+          //You would define Flocal here if it were nonzero.
+        }
       }
     }
 
@@ -336,31 +335,30 @@ void FEM<dim>::assemble_system(){
     Klocal = 0.;
     for(unsigned int q1=0; q1<quadRule; q1++){
       for(unsigned int q2=0; q2<quadRule; q2++){
-	//Find the Jacobian at a quadrature point
-	Jacobian = 0.;
-	for(unsigned int i=0;i<dim;i++){
-	  for(unsigned int j=0;j<dim;j++){
-	    for(unsigned int A=0; A<dofs_per_elem; A++){
-	      Jacobian[i][j] += nodeLocation[local_dof_indices[A]][i]
-		*basis_gradient(A,quad_points[q1],quad_points[q2])[j];
-	    }
-	  }
-	}
-	detJ = Jacobian.determinant();
-	invJacob.invert(Jacobian);
-	for(unsigned int A=0; A<dofs_per_elem; A++){
-	  for(unsigned int B=0; B<dofs_per_elem; B++){
-	    for(unsigned int i=0;i<dim;i++){
-	      for(unsigned int j=0;j<dim;j++){
-		for(unsigned int I=0;I<dim;I++){
-		  for(unsigned int J=0;J<dim;J++){
-		    //EDIT - Define Klocal. You will need to use the inverse Jacobian ("invJacob") and "detJ"
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+        //Find the Jacobian at a quadrature point
+        Jacobian = 0.;
+        for(unsigned int i=0;i<dim;i++){
+          for(unsigned int j=0;j<dim;j++){
+            for(unsigned int A=0; A<dofs_per_elem; A++){
+              Jacobian[i][j] += nodeLocation[local_dof_indices[A]][i]*basis_gradient(A,quad_points[q1],quad_points[q2])[j];
+            }
+          }
+        }
+        detJ = Jacobian.determinant();
+        invJacob.invert(Jacobian);
+        for(unsigned int A=0; A<dofs_per_elem; A++){
+          for(unsigned int B=0; B<dofs_per_elem; B++){
+            for(unsigned int i=0;i<dim;i++){
+              for(unsigned int j=0;j<dim;j++){
+                for(unsigned int I=0;I<dim;I++){
+                  for(unsigned int J=0;J<dim;J++){
+                    //EDIT - Define Klocal. You will need to use the inverse Jacobian ("invJacob") and "detJ"
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }	
 
@@ -368,7 +366,8 @@ void FEM<dim>::assemble_system(){
     for(unsigned int A=0; A<dofs_per_elem; A++){
       //You would assemble F here if it were nonzero.
       for(unsigned int B=0; B<dofs_per_elem; B++){
-	//EDIT - Assemble K from Klocal (you can look at HW2)
+        //EDIT - Assemble K from Klocal (you can look at HW2)
+        K.add(local_dof_indices[A],local_dof_indices[B], Klocal[A][B]);
       }
     }
 
