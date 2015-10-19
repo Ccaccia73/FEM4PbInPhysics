@@ -112,9 +112,24 @@ double FEM<dim>::basis_function(unsigned int node, double xi_1, double xi_2){
     "xi" is the point (in the bi-unit domain) where the function is being evaluated.
     You need to calculate the value of the specified basis function and order at the given quadrature pt.*/
 
-  double value = 0.; //Store the value of the basis function in this variable
+  double value = 1.; //Store the value of the basis function in this variable
+  /*
+  double N_xi_1 = 0.0;
+  double N_xi_2 = 0.0;
+  */
 
-  //EDIT
+  //EDITED
+  if(node < 2){
+    value *= (1. - xi_1)/2.;
+  }else{
+    value *= (1. + xi_1)/2.;
+  }
+
+  if( node % 2 == 0){
+    value *= (1. - xi_2)/2.;
+  }else{
+    value *= (1. + xi_2)/2.;
+  }
 
   return value;
 }
@@ -127,9 +142,26 @@ std::vector<double> FEM<dim>::basis_gradient(unsigned int node, double xi_1, dou
     You need to calculate the value of the derivative of the specified basis function and order at the given quadrature pt.
     Note that this is the derivative with respect to xi (not x)*/
 
-  std::vector<double> values(dim,0.0); //Store the value of the gradient of the basis function in this variable
+  std::vector<double> values(dim,0.25); //Store the value of the gradient of the basis function in this variable
 
-  //EDIT
+  //EDITED
+  if(node < 2){
+    values[0] *= -xi_1;
+    values[1] *= (1. - xi_1).;
+  }else{
+    values[0] *= xi_1;
+    values[1] *= (1. + xi_1);
+  }
+
+  if( node % 2 == 0){
+    values[0] *= (1. - xi_2);
+    values[1] *= -xi_2;
+  }else{
+    values[0] *= (1. + xi_2);
+    values[1] *= xi_2;
+  }
+
+
 
   return values;
 }
@@ -168,6 +200,8 @@ void FEM<dim>::define_boundary_conds(){
     e.g. nodeLocation[7][1] is the y coordinate of global node 7*/
 
   const unsigned int totalNodes = dof_handler.n_dofs(); //Total number of nodes
+
+  
 }
 
 //Setup data structures (sparse matrix, vectors)
