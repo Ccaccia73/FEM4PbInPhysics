@@ -9,6 +9,7 @@ install_manifest.txt
 # Solutions
 *.h5
 *.vtk
+*.zip
 
 # temporary files
 *.tmp
