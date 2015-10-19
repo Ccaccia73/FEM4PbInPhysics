@@ -453,6 +453,8 @@ double FEM<dim>::l2norm_of_error(){
   std::vector<unsigned int> local_dof_indices (dofs_per_elem);
   double u_exact, u_h, x, h_e;
 
+  double delta_u2;
+
   //loop over elements  
   typename DoFHandler<dim>::active_cell_iterator elem = dof_handler.begin_active (), 
     endc = dof_handler.end();
@@ -466,8 +468,11 @@ double FEM<dim>::l2norm_of_error(){
 
     // std::cout << "Element length: " << h_e << std::endl;
 
+    delta_u2 = 0.0;
+
     for(unsigned int q=0; q<quadRule; q++){
     	x = 0.; u_h = 0.;
+    	u_exact = 0.0;
     	//Find the values of x and u_h (the finite element solution) at the quadrature points
     	for(unsigned int B=0; B<dofs_per_elem; B++){
     		x += nodeLocation[local_dof_indices[B]]*basis_function(B,quad_points[q]);
@@ -488,10 +493,10 @@ double FEM<dim>::l2norm_of_error(){
     	// std::cout << "\t\t\tu_h: " << u_h << std::endl;
     	// std::cout << "\t\t\tu_exact: " << u_exact << std::endl;
 
-
-
-    	l2norm += (u_exact - u_h)*(u_exact - u_h)*h_e/2;
+    	delta_u2 += (u_exact - u_h)*(u_exact - u_h);
     }
+
+    l2norm += delta_u2*h_e/2;
   }
 
   return sqrt(l2norm);
