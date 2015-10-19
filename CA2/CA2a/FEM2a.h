@@ -82,6 +82,13 @@ class FEM
   Table<2,double>	        nodeLocation;	  //Table of the coordinates of nodes by global dof number
   std::map<unsigned int,double> boundary_values;  //Map of dirichlet boundary conditions 
 
+  // domanin
+  double x_min, x_max, y_min, y_max;
+  double T0 = 300.;
+  double T1 = 310.;
+  double c0 = 1./3.;
+  double c0_hat = 8.;
+
   //solution name array
   std::vector<std::string> nodal_solution_names;
   std::vector<DataComponentInterpretation::DataComponentInterpretation> nodal_data_component_interpretation;
@@ -147,7 +154,7 @@ std::vector<double> FEM<dim>::basis_gradient(unsigned int node, double xi_1, dou
   //EDITED
   if(node < 2){
     values[0] *= -xi_1;
-    values[1] *= (1. - xi_1).;
+    values[1] *= (1. - xi_1);
   }else{
     values[0] *= xi_1;
     values[1] *= (1. + xi_1);
@@ -171,10 +178,10 @@ template <int dim>
 void FEM<dim>::generate_mesh(std::vector<unsigned int> numberOfElements){
 
   //Define the limits of your domain
-  double x_min = 0.0, //EDITED - define the left limit of the domain, etc.
-    x_max = 0.03, //EDITED
-    y_min = 0.0, //EDITED
-    y_max = 0.08; //EDITED
+  x_min = 0.0; //EDITED - define the left limit of the domain, etc.
+  x_max = 0.03; //EDITED
+  y_min = 0.0; //EDITED
+  y_max = 0.08; //EDITED
 
   Point<dim,double> min(x_min,y_min),
     max(x_max,y_max);
@@ -185,7 +192,7 @@ void FEM<dim>::generate_mesh(std::vector<unsigned int> numberOfElements){
 template <int dim>
 void FEM<dim>::define_boundary_conds(){
 
-  //EDIT - Define the Dirichlet boundary conditions.
+  //EDITED - Define the Dirichlet boundary conditions.
 	
   /*Note: this will be very similiar to the define_boundary_conds function
     in the HW2 template. You will loop over all nodes and use "nodeLocations"
@@ -201,7 +208,17 @@ void FEM<dim>::define_boundary_conds(){
 
   const unsigned int totalNodes = dof_handler.n_dofs(); //Total number of nodes
 
-  
+  // std::map<unsigned int,double> boundary_values;  //Map of dirichlet boundary conditions
+
+  for(unsigned int node_i=0; node_i< totalNodes; ++node_i){
+    if(nodeLocation[node_i][1] == y_min){
+      boundary_values[nodde_i] = T0*(1+c0*nodeLocation[node_i][0]);
+    }else if (nodeLocation[node_i][1] == y_max){
+      boundary_values[nodde_i] = T1*(1+c0_hat*nodeLocation[node_i][0]);
+    }
+  }
+
+
 }
 
 //Setup data structures (sparse matrix, vectors)
