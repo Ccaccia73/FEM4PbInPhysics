@@ -16,7 +16,7 @@ SET(TARGET_SRC
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 
 FIND_PACKAGE(deal.II 8.0 QUIET
-  HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ $ENV{DEAL_II_DIR}
+  HINTS ${deal.II_DIR} ${DEAL_II_DIR} ../ ../../ ../../../../deal_ii_build/ $ENV{DEAL_II_DIR}
   )
 IF(NOT ${deal.II_FOUND})
   MESSAGE(FATAL_ERROR "\n"
@@ -26,6 +26,15 @@ IF(NOT ${deal.II_FOUND})
     )
 ENDIF()
 
+# for -I
+INCLUDE_DIRECTORIES (/usr/include/hdf5/serial/)
+
+# for -L
+LINK_DIRECTORIES(/usr/lib/x86_64-linux-gnu/hdf5/serial/)
+
+
 DEAL_II_INITIALIZE_CACHED_VARIABLES()
 PROJECT(${TARGET})
 DEAL_II_INVOKE_AUTOPILOT()
+
+target_link_libraries(${TARGET} hdf5)
