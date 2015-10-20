@@ -126,16 +126,22 @@ double FEM<dim>::basis_function(unsigned int node, double xi_1, double xi_2){
   */
 
   //EDITED
-  if(node < 2){
-    value *= (1. - xi_1)/2.;
-  }else{
-    value *= (1. + xi_1)/2.;
-  }
-
-  if( node % 2 == 0){
-    value *= (1. - xi_2)/2.;
-  }else{
-    value *= (1. + xi_2)/2.;
+  switch(node)
+  {
+    case 0:
+      value = 0.25*(1. - xi_1)*(1. - xi_2);
+      break;
+    case 1:
+      value = 0.25*(1. + xi_1)*(1. - xi_2);
+      break;
+    case 2:
+      value = 0.25*(1. - xi_1)*(1. + xi_2);
+      break;
+    case 3:
+      value = 0.25*(1. + xi_1)*(1. + xi_2);
+      break;
+    default:
+      std::cout << "Node not valid!!!" << std::endl;
   }
 
   return value;
@@ -149,25 +155,30 @@ std::vector<double> FEM<dim>::basis_gradient(unsigned int node, double xi_1, dou
     You need to calculate the value of the derivative of the specified basis function and order at the given quadrature pt.
     Note that this is the derivative with respect to xi (not x)*/
 
-  std::vector<double> values(dim,0.25); //Store the value of the gradient of the basis function in this variable
+  std::vector<double> values(dim,0.); //Store the value of the gradient of the basis function in this variable
 
   //EDITED
-  if(node < 2){
-    values[0] *= -xi_1;
-    values[1] *= (1. - xi_1);
-  }else{
-    values[0] *= xi_1;
-    values[1] *= (1. + xi_1);
+  switch(node)
+  {
+    case 0:
+      values[0] = -0.25*(1. - xi_2);
+      values[1] = -0.25*(1. - xi_1);
+      break;
+    case 1:
+      values[0] = 0.25*(1. - xi_2);
+      values[1] = -0.25*(1. + xi_1);
+      break;
+    case 2:
+      values[0] = -0.25*(1. + xi_2);
+      values[1] = 0.25*(1. + xi_2);
+      break;
+    case 3:
+      values[0] = 0.25*(1. + xi_1);
+      values[1] = 0.25*(1. + xi_2);
+      break;
+    default:
+      std::cout << "Node not valid!!!" << std::endl;
   }
-
-  if( node % 2 == 0){
-    values[0] *= (1. - xi_2);
-    values[1] *= -xi_2;
-  }else{
-    values[0] *= (1. + xi_2);
-    values[1] *= xi_2;
-  }
-
 
 
   return values;
@@ -214,7 +225,7 @@ void FEM<dim>::define_boundary_conds(){
     if(nodeLocation[node_i][1] == y_min){
       boundary_values[node_i] = T0*(1+c0*nodeLocation[node_i][0]);
     }else if (nodeLocation[node_i][1] == y_max){
-      boundary_values[node_i] = T1*(1+c0_hat*nodeLocation[node_i][0]);
+      boundary_values[node_i] = T1*(1+c0_hat*nodeLocation[node_i][0]*nodeLocation[node_i][0]);
     }
   }
 
@@ -353,8 +364,8 @@ void FEM<dim>::assemble_system(){
                 for(unsigned int I=0;I<dim;I++){
                   for(unsigned int J=0;J<dim;J++){
                     //EDIT - Define Klocal. You will need to use the inverse Jacobian ("invJacob") and "detJ"
-                    Klocal[A][B] -= basis_gradient(A,quad_points[q1],quad_points[2])[i]*kappa[i][j]*
-                                    basis_gradient(B,quad_points[q1],quad_points[2])[j]*detJ*invJacob[i][J]*quad_weight[q1]*quad_weight[q2];
+                    Klocal[A][B] -= basis_gradient(A,quad_points[q1],quad_points[q2])[i]*invJacob[i][I]*kappa[i][j]*
+                                    basis_gradient(B,quad_points[q1],quad_points[q2])[j]*invJacob[j][J]*detJ*quad_weight[q1]*quad_weight[q2];
                   }
                 }
               }
