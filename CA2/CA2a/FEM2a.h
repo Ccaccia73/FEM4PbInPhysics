@@ -170,11 +170,11 @@ std::vector<double> FEM<dim>::basis_gradient(unsigned int node, double xi_1, dou
       break;
     case 2:
       values[0] = -0.25*(1. + xi_2);
-      values[1] = 0.25*(1. + xi_2);
+      values[1] = 0.25*(1. - xi_1);
       break;
     case 3:
-      values[0] = 0.25*(1. + xi_1);
-      values[1] = 0.25*(1. + xi_2);
+      values[0] = 0.25*(1. + xi_2);
+      values[1] = 0.25*(1. + xi_1);
       break;
     default:
       std::cout << "Node not valid!!!" << std::endl;
@@ -284,7 +284,7 @@ void FEM<dim>::setup_system(){
   quad_weight[0] = 5./9.;
   quad_weight[1] = 8./9.;
   quad_weight[2] = 5./9.;
-
+  
   //Just some notes...
   std::cout << "   Number of active elems:       " << triangulation.n_active_cells() << std::endl;
   std::cout << "   Number of degrees of freedom: " << dof_handler.n_dofs() << std::endl;   
@@ -364,8 +364,10 @@ void FEM<dim>::assemble_system(){
                 for(unsigned int I=0;I<dim;I++){
                   for(unsigned int J=0;J<dim;J++){
                     //EDIT - Define Klocal. You will need to use the inverse Jacobian ("invJacob") and "detJ"
-                    Klocal[A][B] -= basis_gradient(A,quad_points[q1],quad_points[q2])[i]*invJacob[i][I]*kappa[i][j]*
-                                    basis_gradient(B,quad_points[q1],quad_points[q2])[j]*invJacob[j][J]*detJ*quad_weight[q1]*quad_weight[q2];
+                    Klocal[A][B] -= basis_gradient(A,quad_points[q1],quad_points[q2])[i]*invJacob[i][I]*
+                                    kappa[I][J]*
+                                    basis_gradient(B,quad_points[q1],quad_points[q2])[j]*invJacob[j][J]*
+                                    detJ*quad_weight[q1]*quad_weight[q2];
                   }
                 }
               }
@@ -373,13 +375,20 @@ void FEM<dim>::assemble_system(){
           }
         }
       }
-    }	
+    }
+    /*
+    std::cout << "Klocal:" << std::endl;
+    std::cout << "[" << Klocal[0][0] << ", " << Klocal[0][1] << ", " << Klocal[0][2] << ", " << Klocal[0][3] << std::endl;
+    std::cout << " " << Klocal[1][0] << ", " << Klocal[1][1] << ", " << Klocal[1][2] << ", " << Klocal[1][3] << std::endl;
+    std::cout << " " << Klocal[2][0] << ", " << Klocal[2][1] << ", " << Klocal[2][2] << ", " << Klocal[2][3] << std::endl;
+    std::cout << " " << Klocal[3][0] << ", " << Klocal[3][1] << ", " << Klocal[3][2] << ", " << Klocal[3][3] << "]" << std::endl;
+    */
 
     //Assemble local K and F into global K and F
     for(unsigned int A=0; A<dofs_per_elem; A++){
       //You would assemble F here if it were nonzero.
       for(unsigned int B=0; B<dofs_per_elem; B++){
-        //EDIT - Assemble K from Klocal (you can look at HW2)
+        //EDITED - Assemble K from Klocal (you can look at HW2)
         K.add(local_dof_indices[A],local_dof_indices[B], Klocal[A][B]);
       }
     }
