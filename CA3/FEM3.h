@@ -80,6 +80,10 @@ class FEM
 
   Table<2,double>	        dofLocation;	 //Table of the coordinates of dofs by global dof number
   std::map<unsigned int,double> boundary_values; //Map of dirichlet boundary conditions
+  
+  // added here to be accessible to other locations
+  double x_min, x_max, y_min, y_max, z_min, z_max;
+
 
   //solution name array
   std::vector<std::string> nodal_solution_names;
@@ -112,8 +116,8 @@ template <int dim>
 double FEM<dim>::C(unsigned int i,unsigned int j,unsigned int k,unsigned int l){
 
   //Define the material parameters of Young's modulus and Poisson's ratio
-  double E= ,  //EDIT
-    nu= ; //EDIT
+  double E= 2.0e11,  //EDITED
+    nu= 0.3; //EDITED
   double lambda=(E*nu)/((1.+nu)*(1.-2.*nu)),
     mu=E/(2.*(1.+nu));
 
@@ -126,12 +130,12 @@ template <int dim>
 void FEM<dim>::generate_mesh(std::vector<unsigned int> numberOfElements){
 
   //Define the limits of your domain
-  double x_min = , //EDIT
-    x_max = , //EDIT
-    y_min = , //EDIT
-    y_max = , //EDIT
-    z_min = , //EDIT
-    z_max = ; //EDIT
+  x_min = 0.0, //EDITED
+  x_max = 1.0, //EDITED
+  y_min = 0.0, //EDITED
+  y_max = 1.0, //EDITED
+  z_min = 0.0, //EDITED
+  z_max = 1.0; //EDITED
 
   Point<dim,double> min(x_min,y_min,z_min),
     max(x_max,y_max,z_max);
@@ -142,7 +146,7 @@ void FEM<dim>::generate_mesh(std::vector<unsigned int> numberOfElements){
 template <int dim>
 void FEM<dim>::define_boundary_conds(){
 
-  //EDIT - Define the Dirichlet boundary conditions.
+  //EDITED - Define the Dirichlet boundary conditions.
 	
   /*Note: this will be very similiar to the define_boundary_conds function
     in the HW2 template. You will loop over all degrees of freedom and use "dofLocation"
@@ -168,6 +172,12 @@ void FEM<dim>::define_boundary_conds(){
     e.g. dofLocation[7][2] is the z-coordinate of global dof 7*/
 
   const unsigned int totalDOFs = dof_handler.n_dofs(); //Total number of degrees of freedom
+
+  for(unsigned int dof_i=0; dof_i< totalDOFs; ++dof_i){
+    if(dofLocation[dof_i][2] == z_min){
+      boundary_values[dof_i] = 0.0;
+    }
+  }
 }
 
 //Setup data structures (sparse matrix, vectors)
@@ -316,9 +326,11 @@ void FEM<dim>::assemble_system(){
 
     //Assemble local K and F into global K and F
     for(unsigned int i=0; i<dofs_per_elem; i++){
-      //EDIT - Assemble F from Flocal (you can look at HW2)
+      //EDITED - Assemble F from Flocal (you can look at HW2)
+      F[local_dof_indices[3*A+i]] += Flocal[3*A+i];
       for(unsigned int j=0; j<dofs_per_elem; j++){
-	//EDIT - Assemble K from Klocal (you can look at HW2)
+        //EDITED - Assemble K from Klocal (you can look at HW2)
+        K.add(local_dof_indices[3*A+i],local_dof_indices[3*B+j], Klocal[3*A+i][3*B+j]);
       }
     }
   }
