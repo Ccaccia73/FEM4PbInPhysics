@@ -16,7 +16,7 @@ install_manifest.txt
 
 # Executables
 main*
-!main*.c
+!main*.cc
 
 # Python
 # Byte-compiled / optimized / DLL files
