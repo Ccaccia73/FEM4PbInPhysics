@@ -293,7 +293,7 @@ void FEM<dim>::assemble_system(){
 		                          elasticity tensor: use the function C(i,j,k,l)
 		                          det(J) times the total quadrature weight: fe_values.JxW(q)*/
                   Klocal[3*A+i][3*B+k] += fe_values.shape_grad(3*A+i,q)[j]*C(i,j,k,l)*fe_values.shape_grad(3*B+k,q)[l]*fe_values.JxW(q);
-                  std::cout << " " << Klocal[3*A+i][3*B+k];
+                  // std::cout << " " << Klocal[3*A+i][3*B+k];
                 }
               }
             }
