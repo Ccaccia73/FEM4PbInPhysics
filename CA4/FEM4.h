@@ -68,6 +68,10 @@ class FEM
   //Calculate the l2norm of the difference between the steady state and transient solution
   double l2norm();
 
+  double x_min, x_max, y_min, y_max, z_min, z_max;
+  double T0 = 300.;
+  double T1 = 310.;
+  
   //Class objects
   Triangulation<dim> triangulation; //mesh
   FESystem<dim>      fe;            //FE element
@@ -115,12 +119,12 @@ template <int dim>
 void FEM<dim>::generate_mesh(std::vector<unsigned int> numberOfElements){
 
   //Define the limits of your domain
-  double x_min = , //EDIT - define the left limit of the domain, etc.
-    x_max = , //EDIT
-    y_min = , //EDIT
-    y_max = , //EDIT
-    z_min = , //EDIT
-    z_max = ; //EDIT
+  x_min = 0.0; //EDITED - define the left limit of the domain, etc.
+  x_max = 1.0; //EDITED
+  y_min = 0.0; //EDITED
+  y_max = 1.0; //EDITED
+  z_min = 0.0; //EDITED
+  z_max = 0.1; //EDITED
 
   Point<dim,double> min(x_min,y_min,z_min),
     max(x_max,y_max,z_max);
@@ -149,6 +153,16 @@ void FEM<dim>::define_boundary_conds(){
 
   const unsigned int totalNodes = dof_handler.n_dofs(); //Total number of nodes
 
+    // std::map<unsigned int,double> boundary_values;  //Map of dirichlet boundary conditions
+  for(unsigned int node_i=0; node_i< totalNodes; ++node_i){
+    if(nodeLocation[node_i][0] == x_min){
+      boundary_values_of_D[node_i] = T0;
+      boundary_values_of_V[node_i] = 0.0;
+    }else if (nodeLocation[node_i][0] == x_max){
+      boundary_values_of_D[node_i] = T1;
+      boundary_values_of_V[node_i] = 0.0;
+    }
+  }
 }
 
 //Setup data structures (sparse matrix, vectors)
@@ -211,7 +225,7 @@ void FEM<dim>::assemble_system(){
   Vector<double>     Flocal (dofs_per_elem);
 
   std::vector<unsigned int> local_dof_indices (dofs_per_elem); //This relates local dof numbering to global dof numbering
-  double		    rho = ;                            //EDIT - specify the specific heat per unit volume
+  double		    rho = 3.8151e6;                            //EDITED - specify the specific heat per unit volume
 
   //loop over elements  
   typename DoFHandler<dim>::active_cell_iterator elem = dof_handler.begin_active (),
@@ -235,9 +249,10 @@ void FEM<dim>::assemble_system(){
     Mlocal = 0.;
     for(unsigned int q=0; q<num_quad_pts; q++){
       for(unsigned int A=0; A<fe.dofs_per_cell; A++){
-	for(unsigned int B=0; B<fe.dofs_per_cell; B++){
-	  //EDIT - define Mlocal[A][B]
-	}
+        for(unsigned int B=0; B<fe.dofs_per_cell; B++){
+          //EDITED - define Mlocal[A][B]
+          Mlocal[A][B] += rho*fe_values.shape_value(A,q)*fe_values.shape_value(B,q)*fe_values.JxW(q);
+        }
       }
     }
 
@@ -250,19 +265,22 @@ void FEM<dim>::assemble_system(){
     Klocal = 0.;
     for(unsigned int A=0; A<fe.dofs_per_cell; A++){
       for(unsigned int B=0; B<fe.dofs_per_cell; B++){
-	for(unsigned int q=0; q<num_quad_pts; q++){
-	  for(unsigned int i=0; i<dim; i++){
-	    for(unsigned int j=0; j<dim; j++){
-	      //EDIT - define Klocal[A][B]
-	    }
-	  }
-	}
+        for(unsigned int q=0; q<num_quad_pts; q++){
+          for(unsigned int i=0; i<dim; i++){
+            for(unsigned int j=0; j<dim; j++){
+              //EDITED - define Klocal[A][B]
+              Klocal[A][B] -= kappa[i][j]*fe_values.shape_grad(A,q)[i]*fe_values.shape_grad(B,q)[j]*fe_values.JxW(q);
+            }
+          }
+        }
       }
     }
 
     for (unsigned int i=0; i<dofs_per_elem; ++i){
       for (unsigned int j=0; j<dofs_per_elem; ++j){
-	//EDIT - assemble K and M from Klocal and Mlocal
+        //EDITED - assemble K and M from Klocal and Mlocal
+        M.add(local_dof_indices[i],local_dof_indices[j], Mlocal[i][j]);
+        K.add(local_dof_indices[i],local_dof_indices[j], Klocal[i][j]);
       }
     }
   }
