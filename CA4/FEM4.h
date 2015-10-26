@@ -107,6 +107,7 @@ fe (FE_Q<dim>(order), 1),
   alpha = Alpha;
 
   nodal_solution_names.push_back("D");
+
   nodal_data_component_interpretation.push_back(DataComponentInterpretation::component_is_scalar);
 }
 
@@ -225,7 +226,7 @@ void FEM<dim>::assemble_system(){
   Vector<double>     Flocal (dofs_per_elem);
 
   std::vector<unsigned int> local_dof_indices (dofs_per_elem); //This relates local dof numbering to global dof numbering
-  double		    rho = 3.8151e6;                            //EDITED - specify the specific heat per unit volume
+  double		    rho = 3.8151*1e6;                            //EDITED - specify the specific heat per unit volume
 
   //loop over elements  
   typename DoFHandler<dim>::active_cell_iterator elem = dof_handler.begin_active (),
@@ -251,7 +252,7 @@ void FEM<dim>::assemble_system(){
       for(unsigned int A=0; A<fe.dofs_per_cell; A++){
         for(unsigned int B=0; B<fe.dofs_per_cell; B++){
           //EDITED - define Mlocal[A][B]
-          Mlocal[A][B] += rho*fe_values.shape_value(A,q)*fe_values.shape_value(B,q)*fe_values.JxW(q);
+          Mlocal[A][B] -= rho*fe_values.shape_value(A,q)*fe_values.shape_value(B,q)*fe_values.JxW(q);
         }
       }
     }
@@ -313,12 +314,15 @@ void FEM<dim>::apply_initial_conditions(){
   const unsigned int totalNodes = dof_handler.n_dofs(); //Total number of nodes
 
   for(unsigned int i=0; i<totalNodes; i++){
+    
     if(nodeLocation[i][0] < 0.5){
-      D_trans[i] = ; //EDIT
+      D_trans[i] = T0; //EDITED
     }
     else{
-      D_trans[i] = ; //EDIT
+      D_trans[i] = T0+20*(nodeLocation[i][0]-0.5); //EDITED
     }
+    
+    // D_trans[i] = 10.*nodeLocation[i][0]*nodeLocation[i][0] + T0;
   }
 
   //Find V_0 = M^{-1}*(F_0 - K*D_0)
@@ -370,12 +374,34 @@ void FEM<dim>::solve_trans(){
       For some examples, look at the apply_initial_conditions() function*/
 
     //Find D_tilde. Remember, at this point D_trans = D_n and V_trans = V_n
-    //EDIT
+    //EDITED
 
+    D_tilde = D_trans;
+
+
+    D_tilde.add(delta_t*(1.-alpha), V_trans);
+
+    /*
+    for(unsigned int kk=0; kk<12; ++kk){
+      std::cout << "[" << kk << "] " << D_tilde[kk] << ", ";
+    }
+    std::cout<<std::endl;
+    */
+    
     /*Use D_tilde to update V_trans from V_n to V_{n+1}. This involves solving 
       a matrix/vector system: system_matrix*Vtrans = RHS. You need to define
       system_matrix and RHS to correctly solve for V_trans = V_{n+1} = system_matrix^{-1}*RHS*/
-    //EDIT
+    //EDITED
+    system_matrix.copy_from(M);
+    system_matrix.add(alpha*delta_t,K);
+    K.vmult(RHS,D_trans); //RHS = K*D_trans
+    RHS *= -1.;     //RHS = -1.*RHS = -K*D_trans
+    RHS.add(1.,F);  //RHS = RHS + 1.*F = F - K*D_trans
+
+    //SparseDirectUMFPACK  A;
+    //A.initialize(system_matrix);
+    //A.vmult (V_trans, RHS); //V_trans=system_matrix^{-1}*RHS
+
 
     //Apply boundary conditions on V_trans before solving the matrix/vector system
     MatrixTools::apply_boundary_values (boundary_values_of_V, system_matrix, V_trans, RHS, false);
@@ -391,7 +417,9 @@ void FEM<dim>::solve_trans(){
       multiplies a vector by the matrix itself (non-inverted)*/
 
     //Update D_trans to D_{n+1} using D_tilde and V_trans (V_{n+1})
-    //EDIT
+    //EDITED
+    D_trans = D_tilde;
+    D_trans.add(alpha*delta_t, V_trans);
 
     //Output the results every 100 seconds
     if(t_step%100 == 0){
@@ -428,6 +456,9 @@ void FEM<dim>::output_trans_results (unsigned int index){
 
   //Add nodal DOF data
   data_out.add_data_vector (D_trans, nodal_solution_names, DataOut<dim>::type_dof_data, nodal_data_component_interpretation);
+
+  // data_out.add_data_vector (V_trans, "V", DataOut<dim>::type_dof_data, nodal_data_component_interpretation);
+
   data_out.build_patches (); data_out.write_vtk (output1); output1.close();
 }
 
@@ -456,10 +487,13 @@ double FEM<dim>::l2norm(){
     for(unsigned int q=0; q<num_quad_pts; q++){
       u_steady = 0.; u_trans = 0.;
       for(unsigned int A=0; A<dofs_per_elem; A++){
-	/*//EDIT - interpolate the steady state solution (u_steady) and transient solution (u_trans)
-	  at the current quadrature point using D_steady and D_trans. Similar to finding u_h in HW2*/
+        /*//EDITED - interpolate the steady state solution (u_steady) and transient solution (u_trans)
+            at the current quadrature point using D_steady and D_trans. Similar to finding u_h in HW2*/
+        u_steady += D_steady[local_dof_indices[A]]*fe_values.shape_value(A,q);
+        u_trans  += D_trans[local_dof_indices[A]]*fe_values.shape_value(A,q);
       }
-      //EDIT - define the l2norm of the difference between u_steady and u_trans
+      //EDITED - define the l2norm of the difference between u_steady and u_trans
+      l2norm += (u_steady - u_trans)*(u_steady - u_trans)*fe_values.JxW(q);
     }
 
   }
